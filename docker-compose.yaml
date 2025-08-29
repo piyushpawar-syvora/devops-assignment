@@ -1,0 +1,30 @@
+services:
+  app:
+    build: .               
+    container_name: node-app
+    ports:
+      - "3000:3000"   
+    environment:
+      - DB_HOST=postgres_db
+      - DB_USER=postgres
+      - DB_PASSWORD=syvora
+      - DB_NAME=permalist
+      - DB_PORT=5432
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: syvora
+      POSTGRES_DB: permalist
+    ports:
+      - "5435:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:
