@@ -1,0 +1,46 @@
+{{- range $name, $sts := .Values.statefulsets }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $sts.name | default $name }}
+  {{- with $sts.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- toYaml $sts.selectorLabels | nindent 6 }}
+  serviceName: {{ $sts.serviceName }}
+  replicas: {{ $sts.replicas | default 1 }}
+  template:
+    metadata:
+      labels:
+        {{- toYaml $sts.podLabels | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ $sts.container.name | default $name }}
+          image: {{ $sts.image.repository }}:{{ $sts.image.tag | default "latest" }}
+          imagePullPolicy: {{ $sts.image.pullPolicy | default "IfNotPresent" }}
+          {{- with $sts.container.ports }}
+          ports:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $sts.container.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $sts.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with $sts.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- with $sts.volumeClaimTemplates }}
+  volumeClaimTemplates:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+---
+{{- end }}
