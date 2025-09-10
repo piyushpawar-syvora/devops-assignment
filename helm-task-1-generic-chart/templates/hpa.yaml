@@ -1,30 +1,24 @@
-{{- if .Values.autoscaling.enabled }}
+{{- range $name, $hpa := .Values.hpas }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "generic-chart.name" . }}
+  name: {{ $hpa.name | default $name }}
+  {{- with $hpa.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $hpa.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: {{ include "generic-chart.name" . }}
-  minReplicas: {{ .Values.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+    apiVersion: {{ $hpa.scaleTargetRef.apiVersion | default "apps/v1" }}
+    kind: {{ $hpa.scaleTargetRef.kind | default "Deployment" }}
+    name: {{ $hpa.scaleTargetRef.name }}
+  minReplicas: {{ $hpa.minReplicas | default 1 }}
+  maxReplicas: {{ $hpa.maxReplicas | default 5 }}
   metrics:
-    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
-    {{- end }}
-    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    {{- end }}
+    {{- toYaml $hpa.metrics | nindent 4 }}
+---
 {{- end }}

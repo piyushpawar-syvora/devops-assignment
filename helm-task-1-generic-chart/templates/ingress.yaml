@@ -1,24 +1,25 @@
-{{- if .Values.ingress.enabled -}}
+{{- range $name, $ingress := .Values.ingresses }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "generic-chart.name" . }}
+  name: {{ $ingress.name | default $name }}
+  {{- with $ingress.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
+  {{- with $ingress.ingressClassName }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- with $ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   rules:
-    {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
-      http:
-        paths:
-          {{- range .paths }}
-          - path: {{ .path }}
-            {{- with .pathType }}
-            pathType: {{ . }}
-            {{- end }}
-            backend:
-              service:
-                name: {{ include "generic-chart.name" $ }}
-                port:
-                  number: {{ $.Values.service.port }}
-          {{- end }}
-    {{- end }}
+    {{- toYaml $ingress.rules | nindent 4 }}
+---
 {{- end }}

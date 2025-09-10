@@ -1,55 +1,46 @@
+{{- range $name, $sts := .Values.statefulsets }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "generic-chart.name" . }}
+  name: {{ $sts.name | default $name }}
+  {{- with $sts.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  serviceName: {{ .Values.service.name | default (include "generic-chart.name" .) }}
-  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{- include "generic-chart.selectorLabels" . | nindent 6 }}
+      {{- toYaml $sts.selectorLabels | nindent 6 }}
+  serviceName: {{ $sts.serviceName }}
+  replicas: {{ $sts.replicas | default 1 }}
   template:
     metadata:
       labels:
-        app: {{- include "generic-chart.selectorLabels" . | nindent 8 }}
+        {{- toYaml $sts.podLabels | nindent 8 }}
     spec:
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: {{ $sts.container.name | default $name }}
+          image: {{ $sts.image.repository }}:{{ $sts.image.tag | default "latest" }}
+          imagePullPolicy: {{ $sts.image.pullPolicy | default "IfNotPresent" }}
+          {{- with $sts.container.ports }}
           ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
-              protocol: TCP
-          {{- with .Values.livenessProbe }}
-          livenessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.readinessProbe }}
-          readinessProbe:
+          {{- with $sts.container.env }}
+          env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.volumeMounts }}
+          {{- with $sts.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with .Values.volumes }}
+      {{- with $sts.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+  {{- with $sts.volumeClaimTemplates }}
+  volumeClaimTemplates:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+---
+{{- end }}

@@ -1,61 +1,295 @@
-replicaCount: 1
+deployments:
+  my-app:
+    name: my-app
+    labels:
+      app: my-app
+      tier: backend
+    selectorLabels:
+      app: my-app
+    podLabels:
+      app: my-app
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8080"
 
-image:
-  repository: nginx
-  pullPolicy: IfNotPresent
-  tag: latest
+    replicaCount: 2
+    autoscaling:
+      enabled: false
 
-service:
-  enabled: true
-  type: ClusterIP
-  port: 80
-  targetPort: 80
+    serviceAccountName: my-app-sa
+    imagePullSecrets:
+      - name: regcred
 
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: []
+    image:
+      repository: nginx
+      tag: "1.25"
+      pullPolicy: IfNotPresent
 
-resources: 
-  limits:
-    cpu: 100m
-    memory: 128Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
+    container:
+      name: nginx-container
+      command: []
+      args: []
+      env:
+        - name: ENV
+          value: production
+      envFrom: []
+      ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
 
-livenessProbe:
-  httpGet:
-    path: /
-    port: http
-readinessProbe:
-  httpGet:
-    path: /
-    port: http
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 10
 
-autoscaling:
-  enabled: true
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  targetMemoryUtilizationPercentage: 80
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 3
+      periodSeconds: 5
 
-volumes: []
+    startupProbe: {}
 
-volumeMounts: []
+    lifecycle: {}
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
-configmap: {}
+    volumeMounts: []
+    volumes: []
 
-secret: {}
+    nodeSelector: {}
+    affinity: {}
+    tolerations: []
+    securityContext: {}
 
-nodeSelector: {}
+  another-app:
+    name: another-app
+    labels:
+      app: another-app
+    selectorLabels:
+      app: another-app
+    podLabels:
+      app: another-app
+    replicaCount: 1
+    autoscaling:
+      enabled: false
+    image:
+      repository: busybox
+      tag: latest
+    container:
+      name: busybox-container
+      command: ["sleep"]
+      args: ["3600"]
+      ports: []
 
-tolerations: []
 
-affinity: {}
+configmaps:
+  app-config:
+    name: my-app-config
+    labels:
+      app: my-app
+    annotations:
+      description: "App configuration"
+    data:
+      app.properties: |
+        DEBUG=false
+        PORT=8080
+      settings.json: |
+        {
+          "env": "production",
+          "cache": true
+        }
+
+  secondary-config:
+    name: another-config
+    labels:
+      app: another-app
+    data:
+      config.yaml: |
+        enabled: true
+        retries: 5
+
+
+secrets:
+  db-secret:
+    name: db-secret
+    type: Opaque
+    labels:
+      app: my-app
+    stringData:
+      username: admin
+      password: s3cr3t
+
+  tls-secret:
+    name: tls-secret
+    type: kubernetes.io/tls
+    data:
+      tls.crt: <base64-encoded-cert>
+      tls.key: <base64-encoded-key>
+
+hpas:
+  my-app-hpa:
+    name: my-app-hpa
+    labels:
+      app: my-app
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: my-app
+    minReplicas: 2
+    maxReplicas: 10
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 75
+
+services:
+  my-app-service:
+    name: my-app-service
+    type: ClusterIP
+    selector:
+      app: my-app
+    ports:
+      - name: http
+        port: 80
+        targetPort: 80
+
+  another-app-service:
+    name: another-app-service
+    type: ClusterIP
+    selector:
+      app: another-app
+    ports:
+      - name: http
+        port: 8080
+        targetPort: 8080
+
+
+ingresses:
+  my-app-ingress:
+    name: my-app-ingress
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    tls:
+      - hosts:
+          - myapp.example.com
+        secretName: tls-secret
+    rules:
+      - host: myapp.example.com
+        http:
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: my-app-service
+                  port:
+                    number: 80
+
+  another-app-ingress:
+    name: another-app-ingress
+    ingressClassName: nginx
+    rules:
+      - host: anotherapp.example.com
+        http:
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: another-app-service
+                  port:
+                    number: 8080
+
+
+pvcs:
+  app-storage:
+    name: app-storage
+    labels:
+      app: my-app
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+      storageClassName: standard
+
+
+pvs:
+  app-pv:
+    name: app-pv
+    labels:
+      app: my-app
+    spec:
+      capacity:
+        storage: 1Gi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      storageClassName: standard
+      hostPath:
+        path: /mnt/data
+
+roles:
+  app-role:
+    name: app-role
+    labels:
+      app: my-app
+    rules:
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["get", "watch", "list"]
+      - apiGroups: [""]
+        resources: ["configmaps"]
+        verbs: ["get"]
+ 
+statefulsets:
+  redis:
+    name: redis
+    serviceName: redis-headless
+    labels:
+      app: redis
+    selectorLabels:
+      app: redis
+    podLabels:
+      app: redis
+    replicas: 3
+    image:
+      repository: redis
+      tag: "6.2"
+      pullPolicy: IfNotPresent
+    container:
+      name: redis
+      ports:
+        - name: redis
+          containerPort: 6379
+          protocol: TCP
+      env:
+        - name: REDIS_MAXMEMORY
+          value: "256mb"
+    volumeMounts:
+      - name: data
+        mountPath: /data
+    volumes: []
+    volumeClaimTemplates:
+      - metadata:
+          name: data
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
+          storageClassName: standard
