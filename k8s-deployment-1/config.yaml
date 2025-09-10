@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: json-config
+data:
+  config.json: |
+    {
+      api_key: 12345,
+      environment: dev
+    }
+
