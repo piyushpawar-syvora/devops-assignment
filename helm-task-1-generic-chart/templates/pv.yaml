@@ -1,0 +1,17 @@
+{{- range $name, $pv := .Values.pvs }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ $pv.name | default $name }}
+  {{- with $pv.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $pv.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- toYaml $pv.spec | nindent 2 }}
+---
+{{- end }}

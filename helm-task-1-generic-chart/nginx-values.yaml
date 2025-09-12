@@ -1,0 +1,76 @@
+deployments:
+  my-app:
+    replicaCount: 3
+    image:
+      tag: latest
+    container:
+      env:
+        - name: ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: ENV
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: DB_PASS
+      volumeMounts:
+        - name: config-volume
+          mountPath: /app/config.json
+          subPath: config.json
+    volumes:
+      - name: config-volume
+        configMap:
+          name: json-config
+
+configmaps:
+  json-config:
+    name: json-config
+    data:
+      config.json: |
+        {
+          "api_key": 12345,
+          "environment": "dev"
+        }
+
+services:
+  my-app-service:
+    type: NodePort  
+
+ingresses:
+  my-app-ingress:
+    name: nginx-ingress
+    rules:
+      - host: nginx.local
+        http:
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: nginx-service
+                  port:
+                    number: 80
+
+statefulsets:
+  web:
+    name: web
+    serviceName: nginx
+    replicas: 2
+    image:
+      repository: nginx
+      tag: latest
+    container:
+      name: nginx
+      volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+    volumeClaimTemplates:
+      - metadata:
+          name: www
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
