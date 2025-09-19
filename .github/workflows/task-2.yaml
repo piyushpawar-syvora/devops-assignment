@@ -4,11 +4,11 @@ name: Build, Push & Update Helm Chart
 on:
   push:
     branches:
-      - "feat/*" 
+      # - "feat/*" 
       - "assignment/ci-cd-task-2"
     paths:
       - "Dockerfile"
-      - ".github/workflows/task-2.yaml"
+      # - ".github/workflows/task-2.yaml"
 
 jobs:
   build-and-deploy:
