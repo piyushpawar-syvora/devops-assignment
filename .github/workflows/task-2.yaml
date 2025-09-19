@@ -1,0 +1,50 @@
+        
+name: Build, Push & Update Helm Chart
+
+on:
+  push:
+    branches:
+      - "feat/*" 
+      - "assignment/ci-cd-task-2"
+    paths:
+      - "Dockerfile"
+      - ".github/workflows/build-and-update-helm.yaml"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Docker Image
+        id: build-image
+        run: |
+          IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/my-app"
+          IMAGE_TAG=${GITHUB_SHA::7}
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+          docker push $IMAGE_NAME:$IMAGE_TAG
+
+
+      - name: Update Helm Chart values.yaml
+        run: |
+          sed -i "s|tag:.*|tag: $IMAGE_TAG|" helm-task-1-generic-chart/values.yaml
+
+      - name: Commit Helm update
+        run: |
+          git add helm-task-1-generic-chart/values.yaml
+          git commit -m "chore: update image tag to $IMAGE_TAG"
+          git push
