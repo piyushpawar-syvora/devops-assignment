@@ -6,8 +6,8 @@ on:
     branches:
       # - "feat/*" 
       - "assignment/ci-cd-task-2"
-    paths:
-      - "Dockerfile"
+    # paths:
+    #   - "Dockerfile"
       # - ".github/workflows/task-2.yaml"
 
 
