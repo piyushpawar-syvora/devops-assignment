@@ -8,7 +8,7 @@ on:
       - "assignment/ci-cd-task-2"
     paths:
       - "Dockerfile"
-      - ".github/workflows/build-and-update-helm.yaml"
+      - ".github/workflows/task-2.yaml"
 
 jobs:
   build-and-deploy:
