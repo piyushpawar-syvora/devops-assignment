@@ -46,6 +46,8 @@ jobs:
 
       - name: Commit Helm update
         run: |
+          git config --global user.email "piyush.pawar@syvora.com"
+          git config --global user.name "Piyush Pawar"
           git add helm-task-1-generic-chart/values.yaml
           git commit -m "chore: update image tag to $IMAGE_TAG"
           git push
