@@ -6,7 +6,7 @@ metadata:
 data:
   policy.csv: |
     g, dev-team, role:developer
-    p, role:developer, applications, get, demo-project/*, allow
-    p, role:developer, applications, sync, demo-project/*, allow
-    p, role:developer, applications, create, demo-project/*, deny
+    p, role:developer, applications, get, helm-task-1-generic-chart/*, allow
+    p, role:developer, applications, sync, helm-task-1-generic-chart/*, allow
+    p, role:developer, applications, create, helm-task-1-generic-chart/*, deny
   policy.default: role:readonly
