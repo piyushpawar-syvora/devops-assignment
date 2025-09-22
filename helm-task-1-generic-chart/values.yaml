@@ -129,13 +129,6 @@ secrets:
       username: admin
       password: s3cr3t
 
-  tls-secret:
-    name: tls-secret
-    type: kubernetes.io/tls
-    data:
-      tls.crt: <base64-encoded-cert>
-      tls.key: <base64-encoded-key>
-
 hpas:
   my-app-hpa:
     name: my-app-hpa
