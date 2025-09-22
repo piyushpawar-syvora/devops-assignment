@@ -22,7 +22,7 @@ deployments:
 
     image:
       repository: nginx
-      tag: e394731
+      tag: "1.25"
       pullPolicy: IfNotPresent
 
     container:
@@ -84,7 +84,7 @@ deployments:
       enabled: false
     image:
       repository: busybox
-      tag: e394731
+      tag: latest
     container:
       name: busybox-container
       command: ["sleep"]
@@ -262,7 +262,7 @@ statefulsets:
     replicas: 3
     image:
       repository: redis
-      tag: e394731
+      tag: "6.2"
       pullPolicy: IfNotPresent
     container:
       name: redis
