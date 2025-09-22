@@ -91,6 +91,9 @@ deployments:
       args: ["3600"]
       ports: []
 
+serviceAccount:
+  create: true          
+  name: my-app-sa
 
 configmaps:
   app-config:
