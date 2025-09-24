@@ -223,22 +223,6 @@ pvcs:
           storage: 1Gi
       storageClassName: standard
 
-
-pvs:
-  app-pv:
-    name: app-pv
-    labels:
-      app: my-app
-    spec:
-      capacity:
-        storage: 1Gi
-      accessModes:
-        - ReadWriteOnce
-      persistentVolumeReclaimPolicy: Retain
-      storageClassName: standard
-      hostPath:
-        path: /mnt/data
-
 roles:
   app-role:
     name: app-role
