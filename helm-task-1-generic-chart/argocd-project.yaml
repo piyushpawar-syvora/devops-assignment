@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: demo-project
+  namespace: argocd
+spec:
+  description: Demo project for GitOps deployment
+  sourceRepos:
+    - https://github.com/piyushpawar-syvora/devops-assignment.git
+  destinations:
+    - namespace: dev
+      server: https://kubernetes.default.svc
+  roles:
+    - name: developer
+      description: Developer role for demo-project
+      policies:
+        - p, proj:demo-project:developer, applications, get, helm-task-1-generic-chart/*, allow
+        - p, proj:demo-project:developer, applications, sync, helm-task-1-generic-chart/*, allow
+        - p, proj:demo-project:developer, applications, create, helm-task-1-generic-chart/*, deny
+      groups:
+        - dev-team

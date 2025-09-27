@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+data:
+  policy.csv: |
+    g, dev-team, role:developer
+    p, role:developer, applications, get, helm-task-1-generic-chart/*, allow
+    p, role:developer, applications, sync, helm-task-1-generic-chart/*, allow
+    p, role:developer, applications, create, helm-task-1-generic-chart/*, deny
+  policy.default: role:readonly

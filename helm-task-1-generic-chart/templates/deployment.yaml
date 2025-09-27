@@ -1,0 +1,124 @@
+{{- range $name, $deployment := .Values.deployments }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ default $name $deployment.name | quote }}
+  labels:
+    {{- range $key, $value := $deployment.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  {{- if not $deployment.autoscaling.enabled }}
+  replicas: {{ $deployment.replicaCount | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- range $key, $value := $deployment.selectorLabels }}
+      {{ $key }}: {{ $value | quote }}
+      {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- range $key, $value := $deployment.podLabels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- with $deployment.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with $deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with $deployment.serviceAccountName }}
+      serviceAccountName: {{ . | quote }}
+      {{- end }}
+
+      {{- with $deployment.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      containers:
+        - name: {{ $deployment.container.name | default $name | quote }}
+          image: {{ $deployment.image.repository }}:{{ $deployment.image.tag | default "latest" }}
+          imagePullPolicy: {{ $deployment.image.pullPolicy | default "IfNotPresent" }}
+
+          {{- with $deployment.container.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with $deployment.container.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with $deployment.container.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with $deployment.container.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with $deployment.container.ports }}
+          ports:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with $deployment.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with $deployment.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with $deployment.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with $deployment.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with $deployment.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with $deployment.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+      {{- with $deployment.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with $deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with $deployment.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with $deployment.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+{{- end }}

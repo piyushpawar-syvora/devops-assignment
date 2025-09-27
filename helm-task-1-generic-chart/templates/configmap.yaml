@@ -1,0 +1,30 @@
+{{- range $name, $configmap := .Values.configmaps }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $configmap.name | default $name | quote }}
+  {{- with $configmap.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $configmap.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+{{- if or $configmap.data $configmap.binaryData }}
+data:
+  {{- with $configmap.data }}
+  {{- range $key, $value := . }}
+  {{ $key | quote }}: |
+    {{- $value | nindent 4 }}
+  {{- end }}
+  {{- end }}
+
+  {{- with $configmap.binaryData }}
+binaryData:
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}
+---
+{{- end }}
