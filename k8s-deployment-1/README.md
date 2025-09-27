@@ -14,7 +14,6 @@ This repository contains Kubernetes manifests to deploy a basic nginx deployment
 
 
    
-   # Deploy StatefulSet for PostgreSQL or other stateful app
 
     # Deploy Statefulset
     kubectl apply -f statefulset.yaml
