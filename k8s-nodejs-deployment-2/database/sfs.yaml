@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-db-statefulset
+  labels:
+    app: postgres-db
+spec:
+  replicas: 1
+  serviceName: "postgres-db-service"
+  selector:
+    matchLabels:
+      app: postgres-db
+  template:
+    metadata:
+      labels:
+        app: postgres-db
+    spec:
+      containers:
+        - name: postgres-db
+          image: postgres:14
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: postgres-db-config
+            - secretKeyRef:
+                name: postgres-db-credentials
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          
+          livenessProbe:
+            exec:
+              command: ["psql", "-w","-U", "$POSTGRES_USER", "-d","$DB_NAME","-c", "SELECT 1"]
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+            periodSeconds: 5
+            failureThreshold: 5
+            successThreshold: 1
+          readinessProbe:
+            exec:
+              command: ["psql", "-w","-U", "$POSTGRES_USER", "-d","DB_NAME","-c", "SELECT 1"]
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+            periodSeconds: 3
+            failureThreshold: 2
+            successThreshold: 1
+
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-db-config
+data:
+  DB_NAME: "permalist"
+  DB_PORT: "5432"
